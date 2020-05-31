@@ -1,0 +1,216 @@
+---
+title: "R Udacity Bikeshare Project"
+output: html_notebook
+---
+
+```{r}
+#load necessary libraries 
+library(ggplot2)
+library(tidyr)
+library(dplyr)
+library(stringr)
+library(reshape)
+
+```
+```{r}
+#load data in a separate chunk 
+ny = read.csv('new_york_city.csv')
+wash = read.csv('washington.csv')
+chi = read.csv('chicago.csv')
+```
+
+```{r}
+
+```
+```{r}
+
+#Question 1:
+#Is there a drop off in usage in the winter 
+
+#convert pull month out of start.time.
+nyMonth = months(as.Date(ny$Start.Time))
+washMonth = months(as.Date(wash$Start.Time))
+chiMonth  = months(as.Date(chi$Start.Time))
+#gather the data by month
+nyMonthCounts   = as.data.frame(table(nyMonth))
+washMonthCounts = as.data.frame(table(washMonth))
+chiMonthCounts  = as.data.frame(table(chiMonth))
+
+#create a single dataframe with all of the counts by month for the different cities
+monthCounts <- cbind(nyMonthCounts, washMonthCounts$Freq, chiMonthCounts$Freq)
+#need to add a value to the table to sort easily by month for correct
+#ordering of the histogram bars on the plot
+values <- c("1", "2", "3", "4", "5", "6")
+index <- c("January", "February", "March", "April","May","June")
+monthCounts$date_col <- values[match(monthCounts$nyMonth, index)]
+monthCounts <- monthCounts[order(monthCounts$date_col),]
+colnames(monthCounts) = c("month","New York","Washington DC","Chicago","date_col")
+
+df <- data.frame(month = monthCounts$date_col,
+                  NY = monthCounts$`New York`,
+                  Washington = monthCounts$`Washington DC`,
+                  Chicago = monthCounts$Chicago
+                )
+
+
+dfMut <- df %>% gather(key = Month, value = Value, NY:Chicago)
+
+ggplot(dfMut, aes(Month, Value, fill = month)) + 
+  geom_col(position = "dodge") + 
+  scale_fill_discrete(name = "Month", labels = c("Jan", "Feb","Mar","Apr","May","Jun")) +
+  labs(title="Number of rides per month for each city") +
+  xlab("City and Month") +
+  ylab("Number of Rides")
+  
+
+```
+In all three cities there is a clear trend of lower usuage in the winter months.   Without the full year of data over multiple years, it is hard to make a definitive determination as to whether or not usage is lower in the winter.   But, from the data that exists, there is a definite trend towards having lower usage in the winter months.
+
+
+```{r}
+#Question 2:
+#Rank start location to find out which are the most popular
+#stations and on average how long are the trips taken from those stations.  This has
+#implications for making sure there are enough bikes in the correct location
+#as well as determining how many bikes need to be recovered
+#also how many total usages where there per city.
+
+
+#gets the statistics of the data  and take the top 30 station data in terms
+# of the most used start stations for plotting
+getStats <- function(df1, df2){
+ 
+rowDim = dim(nyStationSum)[1]
+retDF <- data.frame(matrix(nrow=rowDim, ncol=5))
+colnames(retDF) <- c("Start.Station","Avg_time","std_time","median","Freq")
+index = 0
+
+for (i in df1$Var1){
+       data <- df2[df2$Start.Station == i,]
+       rowData <- df1[df1$Var1 == i,]
+      
+       retDF[index,1] = str_wrap(i, width = 15)
+       retDF[index,2] = mean(data$Trip.Duration)
+       retDF[index,3] = sd(data$Trip.Duration)
+       retDF[index,4] = median(data$Trip.Duration)
+       retDF[index,5] = rowData$Freq
+       index = index + 1
+  
+}
+
+  
+  retDF <- retDF[order(-retDF$"Freq"),]
+  retDF <- head(retDF, 10)
+  return (retDF)
+}
+
+#get the Station and trip duration for each city
+nyStart <- as.data.frame(ny$Start.Station)
+nyStart <- cbind(nyStart, ny$Trip.Duration)
+colnames(nyStart) = c("Start.Station","Trip.Duration")
+washStart <- as.data.frame(wash$Start.Station)
+washStart <- cbind(washStart,wash$Trip.Duration)
+colnames(washStart) = c("Start.Station","Trip.Duration")
+chiStart  <- as.data.frame(chi$Start.Station)
+chiStart <- cbind(chiStart,chi$Trip.Duration)
+colnames(chiStart) = c("Start.Station","Trip.Duration")
+
+
+#summarize data by start.station
+nyStationSum   <- as.data.frame(table(ny$Start.Station))
+washStationSum <- as.data.frame(table(wash$Start.Station))
+chiStationSum  <- as.data.frame(table(chi$Start.Station))
+
+totalNY   = sum(nyStationSum$Freq) - 1
+totalWash = sum(washStationSum$Freq) - 1
+totalChi  = sum(chiStationSum$Freq)  -1
+total_usage = totalNY + totalWash + totalChi
+x = c(totalNY,totalWash,totalChi)
+#get percentage usage per city
+x = 100*(x/total_usage)
+city = c("New York", "Washington DC", "Chicago")
+dfx = data.frame(values = x)
+dfx <- cbind(dfx, city)
+ggplot(aes(city,values), data = dfx) + 
+  geom_col() + 
+  labs(title = "Percent Total bike usages per city") +
+  xlab("City") + 
+  ylab("Percent")
+#calculate statistics on trip duration for each of these start stations and
+#take only the top 10 stations in terms of number of times the station was used
+ 
+statNY   <- getStats(nyStationSum, nyStart)
+statWash <- getStats(washStationSum, washStart)
+statChi  <- getStats(chiStationSum, chiStart)
+
+
+#create plots 
+ggplot(aes(Start.Station, Freq), data = statNY) + 
+  geom_col() + 
+  theme(axis.text.x = element_text(angle = 90)) + 
+  labs(title = "New York top 10 start locations by number of usages") + 
+  xlab("Start Location") + 
+  ylab("Number of usages")
+
+ggplot(aes(Start.Station, Freq), data = statWash) + 
+  geom_col() + 
+  theme(axis.text.x = element_text(angle = 90)) + 
+  labs(title = "Washington DC top 10 start locations by number of usages") + 
+  xlab("Start Location") + 
+  ylab("Number of usages")
+
+ggplot(aes(Start.Station, Freq), data = statWash) + 
+  geom_col() + 
+  theme(axis.text.x = element_text(angle = 90)) + 
+  labs(title = "Chicago top 10 start locations by number of usages") + 
+  xlab("Start Location") + 
+  ylab("Number of usages")
+
+```
+
+
+
+
+
+
+```{r}
+#Question 3
+#Which group, customers, subscribers or none, have more usage and does 
+#that very by city?
+getCustomerInfo <- function(city,df){
+  #print(city)
+  #print(colnames(df))
+  #print(dim(df[df$User.Type == "Subscriber",]))
+  total = dim(df)[1]
+  numSubscribers = as.integer(100*(dim(df[df$User.Type == "Subscriber",])[1])/total)
+  numCustomers   = as.integer(100*(dim(df[df$User.Type == "Customer",])[1])/total)
+  numNone        = as.integer(100*(dim(df[(df$User.Type != "Customer" & df$User.Type != "Subscriber"),])[1])/total)
+ 
+  
+  totalVal = c(city,numSubscribers, numCustomers, numNone)
+
+return(totalVal)
+  
+}
+
+
+customerDF <- data.frame(matrix(nrow=3, ncol=4))
+colnames(customerDF) <- c("City","Subscribers","Customers","None")
+customerDF[1,] = getCustomerInfo("New York", ny)
+customerDF[2,] = getCustomerInfo("Washington CD", wash)
+customerDF[3,] = getCustomerInfo("Chicago", chi)
+
+
+#use line plot to plot the percentage data.   
+ggplot( customerDF) +
+  geom_line(aes(City, as.integer(Subscribers),color = "Subscribers", group = 1)) +
+  geom_line(aes(City, as.integer(Customers),color = "Customers", group = 1)) +
+  labs(title = "Percentage of User Types by City") +
+  xlab("City") + 
+  ylab("Percentage") +
+  coord_cartesian( ylim = c(0, 100))
+```
+The majority of users are subscribers, topping out at close to 90% in New York.  There are some data points where the type of user was not included and those data points have been excluded.  
+
+
+
