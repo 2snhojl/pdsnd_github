@@ -2,10 +2,10 @@
 Include the date you created this project and README file.
 May 31, 2020
 
-### Udacity github project
+### Udacity bikeshare project
 
 ### Description
-Describe what your project is about and what it does
+Project  
 
 ### Files used
 Include the files used
