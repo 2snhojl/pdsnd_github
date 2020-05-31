@@ -46,14 +46,14 @@ monthCounts$date_col <- values[match(monthCounts$nyMonth, index)]
 monthCounts <- monthCounts[order(monthCounts$date_col),]
 colnames(monthCounts) = c("month","New York","Washington DC","Chicago","date_col")
 
-df <- data.frame(month = monthCounts$date_col,
+monthDF <- data.frame(month = monthCounts$date_col,
                   NY = monthCounts$`New York`,
                   Washington = monthCounts$`Washington DC`,
                   Chicago = monthCounts$Chicago
                 )
 
 
-dfMut <- df %>% gather(key = Month, value = Value, NY:Chicago)
+dfMonth <- monthDF %>% gather(key = Month, value = Value, NY:Chicago)
 
 ggplot(dfMut, aes(Month, Value, fill = month)) + 
   geom_col(position = "dodge") + 
