@@ -64,7 +64,7 @@ ggplot(dfMut, aes(Month, Value, fill = month)) +
   
 
 ```
-In all three cities there is a clear trend of lower usuage in the winter months.   Without the full year of data over multiple years, it is hard to make a definitive determination as to whether or not usage is lower in the winter.   But, from the data that exists, there is a definite trend towards having lower usage in the winter months.
+In all three cities there is a clear trend of lower usuage in the winter months.  From the data that exists, there is a definite trend towards having lower usage in the winter months.  The data set contains data from six months in one calendar year, the data shows a clear trend, but a conclusion about whether or not more usage happens in the winter will need to be followed up when more data becomes available.
 
 
 ```{r}
