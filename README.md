@@ -8,8 +8,11 @@ May 31, 2020
 Project  
 
 ### Files used
-Include the files used
+.gitignore
+README.md
+R_Bikeshare_notebook.Rmd
+
 
 ### Credits
-It's important to give proper credit. Add links to any repo that inspired you or blogposts you consulted.
+Thanks to Udacity for creating this project
 
